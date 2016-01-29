@@ -10,11 +10,17 @@ import unicodedata
 ##http://www.burrows.co.uk/scripts_AA/db4_IBAA_09.dll/next_prev?PAGE=0&SID=40598917
 ##http://www.buburrows.co.uk/scripts_AA/db4_IBAA_09.dll/sf?who=**&what=&where=e.g.:+Lancaster+Road&sortby_=name&Searchbutton=Search&whatfrompopup=&SID=40598917
 
+
 headers = ""
 Companies = []
 
 ##Query the server to get the search results from the database
-URL = "http://www.burrows.co.uk/scripts/db4_ibaa_09.dll/setdb?database=307928"
+##Swansea
+#URL = "http://www.burrows.co.uk/scripts/db4_ibaa_09.dll/setdb?database=307928"
+##Bristol
+URL = "http://www.burrows.co.uk/scripts/db4_ibaa_09.dll/setdb?database=308139"
+
+
 connection = urllib2.urlopen(URL)
 HTML = connection.read()
 connection.close()
@@ -50,6 +56,15 @@ print("{0} pages to process, processing page {1}".format(maxPages, pageNo))
 
 while pageNo <= maxPages:
 
+    DatabaseURL = "http://www.burrows.co.uk/scripts_AA/db4_IBAA_09.dll/next_prev?PAGE={0}&SID={1}".format(pageNo,SessionID)
+
+    connection2 = urllib2.urlopen(DatabaseURL)
+    HTML2 = connection2.read()
+    connection2.close()
+
+    DB_Soup = BeautifulSoup(HTML2)
+
+
     table_rows = DB_Soup.find_all("a", {"class":"atable"})
 
     for row in table_rows:
@@ -74,9 +89,7 @@ while pageNo <= maxPages:
         if headers == "":
             for row in Table_Labels:
                 headers += row.text + ','
-            with open("TravelToWork.csv", "wb") as f:
-                writer = csv.writer(f)
-                writer.writerows(headers)
+
 
 
 
@@ -87,12 +100,12 @@ while pageNo <= maxPages:
         Table_Details = Company_Soup.find_all("td", {"class": "entrytxt"})
         for detail in Table_Details:
             if not detail.text.strip() == '':
-                companyDetails += detail.text + ','
+                companyDetails += '"' + detail.text + '",'
 
             else:
                 companyDetails += ','
         try:
-            companyDetails = re.sub(pattern, ",", unicodedata.normalize('NFKD', companyDetails).encode('ascii', 'ignore'))
+            companyDetails = re.sub(pattern, " ", unicodedata.normalize('NFKD', companyDetails).encode('ascii', 'ignore'))
         except:
             print(companyDetails)
         Companies.append([companyDetails])
@@ -111,13 +124,7 @@ while pageNo <= maxPages:
 
     Companies = []
 
-    DatabaseURL = "http://www.burrows.co.uk/scripts_AA/db4_IBAA_09.dll/next_prev?PAGE={0}&SID={1}".format(pageNo,SessionID)
 
-    connection2 = urllib2.urlopen(DatabaseURL)
-    HTML2 = connection2.read()
-    connection2.close()
-
-    DB_Soup = BeautifulSoup(HTML2)
 
 
 print(headers)
